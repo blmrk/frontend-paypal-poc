@@ -43,7 +43,9 @@ export async function capturePayment(orderId) {
 }
 
 export async function generateAccessToken() {
+  console.log(CLIENT_ID, APP_SECRET)
   const auth = Buffer.from(CLIENT_ID + ":" + APP_SECRET).toString("base64");
+  console.log(auth)
   const response = await fetch(`${base}/v1/oauth2/token`, {
     method: "post",
     body: "grant_type=client_credentials",

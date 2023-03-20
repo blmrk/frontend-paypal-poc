@@ -5,68 +5,103 @@
   </head>
   <body>
     <!-- Replace "test" with your own sandbox Business account app client ID -->
-    <script src="https://www.paypal.com/sdk/js?client-id=test&currency=USD"></script>
+    <script src="https://www.paypal.com/sdk/js?client-id=AZbSTC35y6n3hv_QP8wtE4LrvMvCbbN2XGhYAL6Y4uw_m1Bv5vpzlQr-BEZ8q9OPiMwjHouToR6RIDOc&currency=USD"></script>
     <!-- Set up a container element for the button -->
     <div id="paypal-button-container"></div>
     <script>
-      paypal
-        .Buttons({
-          // Sets up the transaction when a payment button is clicked
-          createOrder: function () {
-            return fetch("/my-server/create-paypal-order", {
-              method: "post",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              // use the "body" param to optionally pass additional order information
-              // like product skus and quantities
-              body: JSON.stringify({
-                cart: [
-                  {
-                    sku: "YOUR_PRODUCT_STOCK_KEEPING_UNIT",
-                    quantity: "YOUR_PRODUCT_QUANTITY",
-                  },
-                ],
-              }),
-            })
-              .then((response) => response.json())
-              .then((order) => order.id);
-          },
-          // Finalize the transaction after payer approval
-          onApprove: function (data) {
-            return fetch("/my-server/capture-paypal-order", {
-              method: "post",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                orderID: data.orderID,
-              }),
-            })
-              .then((response) => response.json())
-              .then((orderData) => {
-                // Successful capture! For dev/demo purposes:
-                console.log(
-                  "Capture result",
-                  orderData,
-                  JSON.stringify(orderData, null, 2)
-                );
-                const transaction = orderData.purchase_units[0].payments.captures[0];
-                alert(
-                  "Transaction " +
-                    transaction.status +
-                    ": " +
-                    transaction.id +
-                    "\n\nSee console for all available details"
-                );
-                // When ready to go live, remove the alert and show a success message within this page. For example:
-                // var element = document.getElementById('paypal-button-container');
-                // element.innerHTML = '<h3>Thank you for your payment!</h3>';
-                // Or go to another URL:  actions.redirect('thank_you.html');
-              });
-          },
-        })
-        .render("#paypal-button-container");
+      // paypal
+      //   .Buttons({
+      //     // Sets up the transaction when a payment button is clicked
+      //     createOrder: function () {
+      //       return fetch("http://localhost:3333/api/paypal/create-payment", {
+      //         method: "post",
+      //         headers: {
+      //           "Content-Type": "application/json",
+      //         },
+      //         // use the "body" param to optionally pass additional order information
+      //         // like product skus and quantities
+      //         body: JSON.stringify({
+      //           cart: [
+      //             {
+      //               sku: "123",
+      //               quantity: "2",
+      //             },
+      //           ],
+      //         }),
+      //       })
+      //         .then((response) => response.json())
+      //         .then((order) => order.id);
+      //     },
+      //     // Finalize the transaction after payer approval
+      //     onApprove: function (data) {
+      //       return fetch("http://localhost:3333/api/paypal/execute-payment", {
+      //         method: "post",
+      //         headers: {
+      //           "Content-Type": "application/json",
+      //         },
+      //         body: JSON.stringify({
+      //           orderID: data.orderID,
+      //         }),
+      //       })
+      //         .then((response) => response.json())
+      //         .then((orderData) => {
+      //           // Successful capture! For dev/demo purposes:
+      //           console.log(
+      //             "Capture result",
+      //             orderData,
+      //             JSON.stringify(orderData, null, 2)
+      //           );
+      //           const transaction = orderData.purchase_units[0].payments.captures[0];
+      //           alert(
+      //             "Transaction " +
+      //               transaction.status +
+      //               ": " +
+      //               transaction.id +
+      //               "\n\nSee console for all available details"
+      //           );
+      //           // When ready to go live, remove the alert and show a success message within this page. For example:
+      //           // var element = document.getElementById('paypal-button-container');
+      //           // element.innerHTML = '<h3>Thank you for your payment!</h3>';
+      //           // Or go to another URL:  actions.redirect('thank_you.html');
+      //         });
+      //     },
+      //   })
+      //   .render("#paypal-button-container");
+
+      const SERVER_URL = 'http://localhost:3333/api';
+
+      paypal.Buttons({
+        createOrder: function (data, actions) {
+          // This function is called when the user clicks the PayPal button
+          const amount = 10.0; // Replace with the desired amount
+          return fetch(`${SERVER_URL}/paypal/create-order`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({amount})
+          })
+          .then((response) => response.json())
+          .then((order) => order.id);
+        },
+        onApprove: function (data, actions) {
+          // This function is called when the user approves the payment
+          return fetch(`${SERVER_URL}/paypal/capture-order`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ orderId: data.orderID })
+          })
+          .then(function(response) {
+            alert('Payment completed successfully');
+          });
+        },
+        onCancel: function (data) {
+          // This function is called when the user cancels the payment
+          alert('Payment cancelled by user or it failed');
+        }
+      }).render('#paypal-button-container');
     </script>
   </body>
 </html>
